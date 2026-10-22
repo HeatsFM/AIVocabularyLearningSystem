@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智记单词 · 中学生AI背单词系统</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- 顶部导航 -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">智</span>
+      <div class="brand-text">
+        <h1>智记单词</h1>
+        <p>AI · 间隔重复 · 错词本</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-view="home">今日学习</button>
+      <button class="tab" data-view="library">词汇库</button>
+      <button class="tab" data-view="test">单词自测</button>
+      <button class="tab" data-view="wrongbook">我的错词本</button>
+      <button class="tab" data-view="stats">学习分析</button>
+    </nav>
+    <div class="top-actions">
+      <select id="schoolSelect" class="school-select">
+        <option value="junior">初中词汇</option>
+        <option value="senior">高中词汇</option>
+      </select>
+      <button id="resetBtn" class="ghost-btn" title="清空学习记录">重置进度</button>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main id="app"></main>
+
+  <!-- ======== 今日学习（放学背单词签到） ======== -->
+  <template id="tpl-home">
+    <section class="view">
+      <div class="home-header">
+        <div>
+          <h2 class="greet" id="greetText"></h2>
+          <p class="sub">根据你的掌握程度，系统已为你规划好今天要复习的单词</p>
+        </div>
+        <div class="due-chip" id="dueChip"></div>
+      </div>
+
+      <div class="home-grid">
+        <div class="card due-card">
+          <h3><span class="dot red"></span>待复习 <small id="dueCount"></small></h3>
+          <div class="big-stat" id="dueStat">0</div>
+          <button class="primary-btn full" data-action="start-due">开始复习</button>
+        </div>
+
+        <div class="card new-card">
+          <h3><span class="dot blue"></span>新单词 <small id="newCount"></small></h3>
+          <div class="big-stat" id="newStat">0</div>
+          <button class="primary-btn full alt" data-action="start-new">学习新词</button>
+        </div>
+
+        <div class="card weak-card">
+          <h3><span class="dot orange"></span>薄弱词汇 <small id="weakCount"></small></h3>
+          <div class="big-stat" id="weakStat">0</div>
+          <button class="primary-btn full weak" data-action="start-weak">优先强化</button>
+        </div>
+
+        <div class="card error-card">
+          <h3><span class="dot purple"></span>错词本 <small id="wrongCount"></small></h3>
+          <div class="big-stat" id="wrongStat">0</div>
+          <button class="primary-btn full purple" data-action="start-wrong">专项订正</button>
+        </div>
+      </div>
+
+      <div class="card review-plan">
+        <h3>未来 7 天复习计划</h3>
+        <div class="plan-bars" id="planBars"></div>
+      </div>
+    </section>
+  </template>
+
+  <!-- ======== 词汇库 ======== -->
+  <template id="tpl-library">
+    <section class="view">
+      <div class="lib-toolbar">
+        <input type="search" id="libSearch" placeholder="搜索单词 / 中文释义…" />
+        <select id="libGrade">
+          <option value="all">全部</option>
+          <option value="junior">初中</option>
+          <option value="senior">高中</option>
+        </select>
+        <span id="libCount" class="count-info"></span>
+      </div>
+      <div class="word-grid" id="wordGrid"></div>
+    </section>
+  </template>
+
+  <!-- ======== 单词自测 ======== -->
+  <template id="tpl-test">
+    <section class="view">
+      <div class="test-banner">
+        <div>
+          <h2>单词自测</h2>
+          <p>选择测试模式，系统将根据艾宾浩斯记忆规律出题</p>
+        </div>
+      </div>
+      <div class="test-modes">
+        <button class="mode-card" data-mode="cn2en">
+          <span class="mode-ico">中→英</span>
+          <strong>看中文默写英文</strong>
+          <small>检验拼写与形近词辨析</small>
+        </button>
+        <button class="mode-card" data-mode="en2cn">
+          <span class="mode-ico">英→中</span>
+          <strong>看英文写中文</strong>
+          <small>检验词义理解</small>
+        </button>
+        <button class="mode-card" data-mode="choice">
+          <span class="mode-ico">四选一</span>
+          <strong>词义选择题</strong>
+          <small>快速检测词义掌握</small>
+        </button>
+        <button class="mode-card" data-mode="listening">
+          <span class="mode-ico">听力</span>
+          <strong>听音辨义词</strong>
+          <small>使用语音合成辅助记忆</small>
+        </button>
+      </div>
+      <div class="test-options">
+        <label>题量
+          <select id="testCount"><option>10</option><option value="20">20</option><option value="30">30</option></select>
+        </label>
+        <button class="primary-btn" data-action="start-test">开始测试</button>
+      </div>
+      <div class="test-history card" id="testHistory"></div>
+    </section>
+  </template>
+
+  <!-- ======== 错词本 ======== -->
+  <template id="tpl-wrongbook">
+    <section class="view">
+      <div class="wrong-head">
+        <h2>我的错词本</h2>
+        <p id="wrongSummary"></p>
+      </div>
+      <div class="wrong-filter">
+        <button class="chip active" data-wfilt="all">全部错词</button>
+        <button class="chip" data-wfilt="spelling">拼写失误</button>
+        <button class="chip" data-wfilt="similar">形近词混淆</button>
+        <button class="chip" data-wfilt="meaning">词义答错</button>
+      </div>
+      <div class="wrong-retest">
+        <button class="primary-btn" data-action="retest-wrong">✍️ 错词再默写</button>
+        <span class="retest-tip">针对错词本进行英文默写，系统按遗忘曲线安排重测</span>
+      </div>
+      <div id="wrongList" class="wrong-list"></div>
+    </section>
+  </template>
+
+  <!-- ======== 学习分析 ======== -->
+  <template id="tpl-stats">
+    <section class="view">
+      <h2>学习分析</h2>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="card">
+        <h3>各单词掌握程度分布</h3>
+        <div class="mastery-dist" id="masteryDist"></div>
+      </div>
+    </section>
+  </template>
+
+  <!-- ======== 复习/学习/自测 运行界面 ======== -->
+  <template id="tpl-run">
+    <section class="view run-view">
+      <div class="run-top">
+        <button class="ghost-btn" data-action="quit-run">退出</button>
+        <div class="run-progress" id="runProgress"><span id="runProgressBar"></span></div>
+        <span id="runCount" class="run-count"></span>
+      </div>
+      <div class="run-stage" id="runStage"></div>
+    </section>
+  </template>
+
+  <!-- ======== 单词学习卡片 ======== -->
+  <template id="tpl-learn-card">
+    <div class="learn-card">
+      <div class="word-header">
+        <span class="word-tag" data-tag></span>
+        <span class="phonetic" data-phonetic></span>
+      </div>
+      <h1 class="show-word" data-word></h1>
+      <p class="show-meaning" data-meaning></p>
+      <p class="show-sentence" data-sentence hidden></p>
+      <div class="controls" data-controls>
+        <button class="reveal-btn primary-btn" data-action="reveal">点击显示释义</button>
+        <div class="grade-btns hidden" data-grades>
+          <button data-grade="0">完全不认识</button>
+          <button data-grade="1">模糊</button>
+          <button data-grade="2">想起来了</button>
+          <button data-grade="3">记得</button>
+          <button data-grade="4">很清楚</button>
+          <button data-grade="5">彻底掌握</button>
+        </div>
+      </div>
+      <div class="speak-btn" data-action="speak" title="朗读">🔊</div>
+    </div>
+  </template>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="modalTitle"></h3>
+      <p id="modalMsg"></p>
+      <div class="error-types" id="errorTypes"></div>
+      <button class="primary-btn full" id="modalOk">知道了</button>
+    </div>
+  </div>
+
+  <script src="js/data/confusion.js"></script>
+  <script src="js/data/words.js"></script>
+  <script src="js/core/compare.js"></script>
+  <script src="js/core/spaced.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
